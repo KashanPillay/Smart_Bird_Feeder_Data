@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "timestamp": "17/10/2025 18:24",
+    "species": "LOONEY BIRDS",
+    "confidence": "84.5%",
+    "image_url": "https://raw.githubusercontent.com/KashanPillay/Smart_Bird_Feeder_Data/main/images/LOONEY_BIRDS_84.5%_20251017_182454.jpg",
+    "filename": "LOONEY_BIRDS_84.5%_20251017_182454.jpg"
+  }
+]
