@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bird Feeder Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .sightings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .sighting-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .sighting-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+        
+        .sighting-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .sighting-info {
+            padding: 20px;
+        }
+        
+        .species {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .confidence {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .filename {
+            color: #95a5a6;
+            font-size: 0.8em;
+            font-family: monospace;
+        }
+        
+        .last-updated {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .sightings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐦 Smart Bird Feeder</h1>
+            <p>Live bird sightings from my automated bird feeder</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-sightings">0</div>
+                <div class="stat-label">Total Sightings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="unique-species">0</div>
+                <div class="stat-label">Unique Species</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="today-sightings">0</div>
+                <div class="stat-label">Today's Sightings</div>
+            </div>
+        </div>
+        
+        <div id="sightings-container">
+            <div class="loading">🔄 Loading bird sightings...</div>
+        </div>
+        
+        <div class="last-updated" id="last-updated">
+            Last updated: <span id="update-time">Never</span>
+        </div>
+    </div>
+
+    <script>
+        let allSightings = [];
+        
+        async function loadSightings() {
+            try {
+                // Replace YOUR_USERNAME with your actual GitHub username
+                const response = await fetch('https://raw.githubusercontent.com/YOUR_USERNAME/bird-feeder-data/main/data.json');
+                const sightings = await response.json();
+                allSightings = sightings;
+                
+                updateStats(sightings);
+                displaySightings(sightings);
+                document.getElementById('update-time').textContent = new Date().toLocaleString();
+                
+            } catch (error) {
+                console.error('Error loading sightings:', error);
+                document.getElementById('sightings-container').innerHTML = 
+                    '<div class="loading">❌ Error loading data. Please check if the repository exists.</div>';
+            }
+        }
+        
+        function updateStats(sightings) {
+            // Total sightings
+            document.getElementById('total-sightings').textContent = sightings.length;
+            
+            // Unique species
+            const uniqueSpecies = new Set(sightings.map(s => s.species));
+            document.getElementById('unique-species').textContent = uniqueSpecies.size;
+            
+            // Today's sightings
+            const today = new Date().toLocaleDateString();
+            const todaySightings = sightings.filter(s => {
+                const sightingDate = new Date(s.timestamp.split(' ')[0].split('/').reverse().join('-'));
+                return sightingDate.toLocaleDateString() === today;
+            });
+            document.getElementById('today-sightings').textContent = todaySightings.length;
+        }
+        
+        function displaySightings(sightings) {
+            const container = document.getElementById('sightings-container');
+            
+            if (sightings.length === 0) {
+                container.innerHTML = '<div class="loading">No bird sightings yet. Check back later!</div>';
+                return;
+            }
+            
+            // Sort by timestamp (newest first)
+            const sortedSightings = [...sightings].reverse();
+            
+            container.innerHTML = `
+                <div class="sightings-grid">
+                    ${sortedSightings.map(sighting => `
+                        <div class="sighting-card">
+                            <img src="${sighting.image_url}" 
+                                 alt="${sighting.species}" 
+                                 class="sighting-image"
+                                 onerror="this.src='https://via.placeholder.com/300x200/667eea/white?text=Image+Loading'">
+                            <div class="sighting-info">
+                                <div class="species">${sighting.species}</div>
+                                <div class="confidence">${sighting.confidence}</div>
+                                <div class="timestamp">📅 ${sighting.timestamp}</div>
+                                <div class="filename">${sighting.filename}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Replace YOUR_USERNAME with your actual GitHub username
+        const username = 'YOUR_USERNAME';
+        document.querySelector('script').innerHTML = document.querySelector('script').innerHTML.replace(/YOUR_USERNAME/g, username);
+        
+        // Load immediately and every 30 seconds
+        loadSightings();
+        setInterval(loadSightings, 30000);
+    </script>
+</body>
+</html>
